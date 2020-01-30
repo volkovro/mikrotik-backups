@@ -1,83 +1,79 @@
 #!/bin/bash
-#Задаём переменные (Для каждого нового роутера - свои)
-#Айпи и в африке айпи
-IP=
-#Логин (пользователь)
-LGIN=
-#Пароль (SSH, если заходите по ключам - не понадобится)
-PASS=
-#Имя (роутера) для бекапа, например по названию города
-NAME=
-#Порт, можно использовать для всех одинаковый или задать каждому отдельно
-PRT=
-#Для проверки доступности
-#Не советую по ICMP, но выбирай сам: закомментируй не нужный
+#Please note that for the correct operation you
+#will need the utilities found here
+#
+#Individual variables
+IP= #Mikrotik IP
+LGIN= #Mikrotik login (user)
+PASS= #Password (SSH)
+NAME= #Name router (example "LasVegasRouter")
+PRT= #Port (can 1 for all)
+#
+#Verification. I do not recommend ICMP,
+#but you can comment on the unnecessary, use #
 #status=$(ping -c 1 $IP &> /dev/null && echo success || echo fail)
 status=$(netcat -w3 -z $IP $PRT && echo success || echo fail)
-
-#Статичные переменные
-#Переменная для статуса (см. выше)
-gg=success
-#DIR от directory, место куда вы хотите сохранять бекапы
-DIR=
-#DATE - это дата
-DATE=$(echo `date +%Y.%m.%d`)
-#для работы понадобится несколько установленных программ,
-#каких конкретно -понятно по коду ниже
-
-#В общем, функция ниже и есть главный работяга в скрипте
-function router1 {
-#Выводим что функция начала работу
+#
+#Static Variables
+SHELF= #Shelf life, needed to remove old backups (in days)
+gg=success #Variable to check (netcat or ICMP check)
+DIR= #Directory for backups, for example /home/user/backups/
+     #Do not use system directories, create a new!
+DATE=$(echo `date +%Y.%m.%d`) #Date
+#
+#Echo is necessary for visualization and logging.
+#If the check is passed, the backup will be created on the router,
+#then saved locally,
+#after which the backup will be deleted from the router.
+#If not, an error will be displayed.
+function backuper {
 echo "
   Start $IP ($NAME)...
   "
-#Если порт и айпи указанны верно - приступим к делу, если нет - ошибку выдадим
 if [ $status = $gg ]
 then
-# Выводим сообщение что роутер прошёл проверку
-  echo "
-  Status $IP - OK, create backup:
-  "
-#Соединяемся с роутером, создаём бекап
+  echo "_______________________________
+  Status $IP - OK, create backup:"
   sshpass -p $PASS ssh -T -p $PRT $LGIN@$IP << EOF
 export file=$IP$NAME
 system backup save name=$IP$NAME
 quit
 EOF
-#Сообщение о начале копирования файлов
 echo "
   Lockal save backup's...
   "
-#Копируем к себе файлы с роутера
 sshpass -p $PASS scp -P $PRT $LGIN@$IP":/$IP$NAME.rsc" $DIR
 sshpass -p $PASS scp -P $PRT $LGIN@$IP":/$IP$NAME.backup" $DIR
-#Выводим сообщение о том что делаем
 echo "
   Cleaning router directory...
   "
-#Удаляем с роутера бекапы
 sshpass -p $PASS ssh -T -p $PRT $LGIN@$IP << EOF
 file remove "$IP$NAME.rsc"
 file remove "$IP$NAME.backup"
 quit
 EOF
-#Выводим сообщение о завершении работы
 echo "
-  $IP END
+$IP END
+  _______________________________
 "
 else
-  echo "ERROR $IP,
-  backup can't create and save
+  echo "  ...............................
+  ERROR $IP,
+  backup can't create and save.
+  Check the specified port and ip
+  ...............................
+  _______________________________
   "
 fi
 }
-#Запускаем функцию
-router
-
-#Этот скрипт для микротов, но его легко адаптировать под любой другой роутер
-#Сообщения нужны для отлавливания ошибок и для последующего логирования
-#Дата нужна для создания архивов с бекапами - эту часть ещё не написал
-#Нужно допилить самодописование скрипта, мб для этого заюзать таблицы
-#Или банальный список, ну и простенький текстовый интерфейс для ебанов
-#хочу замутить
-echo "ну ты понял :)"
+#
+function archandel {
+  zip -9 $DIR$DATE.zip *.backup *.rsc     #archiving
+  rm $DIR*.backup $DIR*.rsc               #cleaning the local folder
+  find "$DIR"2* -mtime +$SHELF -delete    #deleting old versions
+}
+#
+#start function's
+backuper
+archandel
+#Logging will be added soon, sorry
