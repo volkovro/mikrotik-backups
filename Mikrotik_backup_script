@@ -2,30 +2,40 @@
 #Please note that for the correct operation you
 #will need the utilities found here
 #
+#
+#
+#Static Variables
+DIR= #Directory for backups, for example /home/user/backups/
+     #Do not use system directories, create a new!
+DATE=$(echo `date +%Y.%m.%d`) #Date
+exec 2>> $DIR$DATE".log" #Need for log
+#
+#
 #Individual variables
 IP= #Mikrotik IP
 LGIN= #Mikrotik login (user)
 PASS= #Password (SSH)
 NAME= #Name router (example "LasVegasRouter")
 PRT= #Port (can 1 for all)
-#
 #Verification. I do not recommend ICMP,
 #but you can comment on the unnecessary, use #
 #status=$(ping -c 1 $IP &> /dev/null && echo success || echo fail)
 status=$(netcat -w3 -z $IP $PRT && echo success || echo fail)
 #
-#Static Variables
-SHELF= #Shelf life, needed to remove old backups (in days)
-gg=success #Variable to check (netcat or ICMP check)
-DIR= #Directory for backups, for example /home/user/backups/
-     #Do not use system directories, create a new!
-DATE=$(echo `date +%Y.%m.%d`) #Date
 #
-#Echo is necessary for visualization and logging.
-#If the check is passed, the backup will be created on the router,
-#then saved locally,
-#after which the backup will be deleted from the router.
-#If not, an error will be displayed.
+#
+#Other Variables
+#SHELF= #Shelf life, needed to remove old backups (in days)
+gg=success #Variable to check (netcat or ICMP check)
+#
+#
+#
+#Echo is necessary for visualizing and recording errors.
+# If verification passes, a backup will be created on the router,
+# then saved locally,
+# after which the backup will be deleted from the router.
+# If not, an error will be displayed, excluding utility errors.
+#
 function router {
 echo "
   Start $IP ($NAME)...
@@ -76,40 +86,50 @@ function startsaver{
 #
 #
 #
-startsaver > $DIR$DATE.log    #start save backups
-statsave=$(cat $DIR$DATE.log | grep ERROR && echo ERROR || echo success )
+startsaver >> $DIR$DATE.log #Start save backup's
+#
+#
+#
+#Logging, archiving and version control
+#
+#If an error occurred while creating or copying, including when
+#utilities were working, the archive will be marked as broken,
+#and you will see an error in the log
+statsave=$(cat $DIR$DATE.log | grep "ERROR \| failed \| denied" && echo ERROR || echo success )
 #
 function archandel {
 echo "
 
   _______________________________
-  Archiving of collected backup's started"
+  Archiving of collected backup's started:"
 if [ "$statsave" = "$gg" ]
   then
     zip -9 -j $DIR$DATE.zip $DIR*.backup $DIR*rsc
     rm $DIR*.backup $DIR*.rsc
-    echo "
-  Archiving done
-  _______________________________"
 #    echo "
 #    search and delete old versions"
 #    find "$DIR"2* -mtime +$SHELF -delete
+    echo "
+  Archiving done
+  _______________________________"
   else
     echo "  ...............................
                 ERROR
     not all backups are received
         сheck the correctness
          of the entered data
-    "
+          and read the log!
+  ..............................."
     zip -9 -j $DIR$DATE"_brocken".zip $DIR*.backup $DIR*rsc
     rm $DIR*.backup $DIR*.rsc
-    echo "  ...............................
-  _______________________________"
+    echo "  _______________________________"
 fi
 }
 #
 archandel >> $DIR$DATE.log    #Archiving of collected backup's started
                               #Search and delete old versions opt.
+#
+#
 #
 #Mail
 #
