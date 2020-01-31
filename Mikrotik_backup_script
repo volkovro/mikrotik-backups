@@ -26,7 +26,7 @@ DATE=$(echo `date +%Y.%m.%d`) #Date
 #then saved locally,
 #after which the backup will be deleted from the router.
 #If not, an error will be displayed.
-function backuper {
+function router {
 echo "
   Start $IP ($NAME)...
   "
@@ -66,14 +66,50 @@ else
   "
 fi
 }
+#nextrouterdata
+#nextrouterfunc
 #
-function archandel {
-  zip -9 $DIR$DATE.zip *.backup *.rsc     #archiving
-  rm $DIR*.backup $DIR*.rsc               #cleaning the local folder
-  find "$DIR"2* -mtime +$SHELF -delete    #deleting old versions
+function startsaver{
+  router
+  #nextrouterfunc-name
 }
 #
-#start function's
-backuper
-archandel
-#Logging will be added soon, sorry
+#
+#
+startsaver > $DIR$DATE.log    #start save backups
+statsave=$(cat $DIR$DATE.log | grep ERROR && echo ERROR || echo success )
+#
+function archandel {
+echo "
+
+  _______________________________
+  Archiving of collected backup's started"
+if [ "$statsave" = "$gg" ]
+  then
+    zip -9 -j $DIR$DATE.zip $DIR*.backup $DIR*rsc
+    rm $DIR*.backup $DIR*.rsc
+    echo "
+  Archiving done
+  _______________________________"
+#    echo "
+#    search and delete old versions"
+#    find "$DIR"2* -mtime +$SHELF -delete
+  else
+    echo "  ...............................
+                ERROR
+    not all backups are received
+        сheck the correctness
+         of the entered data
+    "
+    zip -9 -j $DIR$DATE"_brocken".zip $DIR*.backup $DIR*rsc
+    rm $DIR*.backup $DIR*.rsc
+    echo "  ...............................
+  _______________________________"
+fi
+}
+#
+archandel >> $DIR$DATE.log    #Archiving of collected backup's started
+                              #Search and delete old versions opt.
+#
+#Mail
+#
