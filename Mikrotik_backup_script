@@ -1,36 +1,38 @@
 #!/bin/bash
-#Please note that for the correct operation you
-#will need the utilities found here
+# Please note that for the correct operation you
+# will need the utilities found here
 #
 #
 #
 #Static Variables
-DIR= #Directory for backups, for example /home/user/backups/
-     #Do not use system directories, create a new!
-DATE=$(echo `date +%Y.%m.%d`) #Date
-exec 2>> $DIR$DATE".log" #Need for log
+DIR=                        #Directory for backups, for example /home/user/backups/
+                            #Do not use system directories, create a new!
+#
+DATE=$(echo `date +%Y.%m.%d`)       #Date
+exec 2>> $DIR$DATE".log"            #Need for log
 #
 #
 #Individual variables
-IP= #Mikrotik IP
-LGIN= #Mikrotik login (user)
-PASS= #Password (SSH)
-NAME= #Name router (example "LasVegasRouter")
-PRT= #Port (can 1 for all)
-#Verification. I do not recommend ICMP,
-#but you can comment on the unnecessary, use #
+IP=                         #Mikrotik IP
+LGIN=                       #Mikrotik login (user)
+PASS=                       #Password (SSH)
+NAME=                       #Name router (example "LasVegasRouter")
+PRT=                        #Port (can 1 for all)
+#
+# Verification. I do not recommend ICMP,
+# but you can comment on the unnecessary, use #
 #status=$(ping -c 1 $IP &> /dev/null && echo success || echo fail)
 status=$(netcat -w3 -z $IP $PRT && echo success || echo fail)
 #
 #
 #
 #Other Variables
-#SHELF= #Shelf life, needed to remove old backups (in days)
-gg=success #Variable to check (netcat or ICMP check)
+#SHELF=                     #Shelf life, needed to remove old backups (in days)
+gg=success                  #Variable to check (netcat or ICMP check)
 #
 #
 #
-#Echo is necessary for visualizing and recording errors.
+# Echo is necessary for visualizing and recording errors.
 # If verification passes, a backup will be created on the router,
 # then saved locally,
 # after which the backup will be deleted from the router.
@@ -86,15 +88,15 @@ function startsaver{
 #
 #
 #
-startsaver >> $DIR$DATE.log #Start save backup's
+startsaver >> $DIR$DATE.log               #Start save backup's
 #
 #
 #
-#Logging, archiving and version control
+# Logging, archiving and version control
 #
-#If an error occurred while creating or copying, including when
-#utilities were working, the archive will be marked as broken,
-#and you will see an error in the log
+# If an error occurred while creating or copying, including when
+# utilities were working, the archive will be marked as broken,
+# and you will see an error in the log
 statsave=$(cat $DIR$DATE.log | grep "ERROR \| failed \| denied" && echo ERROR || echo success )
 #
 function archandel {
@@ -131,5 +133,32 @@ archandel >> $DIR$DATE.log    #Archiving of collected backup's started
 #
 #
 #
-#Mail
+# I suggest using the Telegram bot for alerts.
+# It is convenient and quite simple. You can learn about how to find
+# out the chat ID and bot token from the many tutorials on the network,
+# I will not describe it.                           Attention!
+# If this messenger is blocked in your country, you will have to use VPN
+#Variables for alerts
+TOKEN =                       #Bot token
+IDPM =                        #ID chat where only you and the bot
+#IDCHAT =                     #If you have a group chat - its ID
+URL = "https://api.telegram.org/bot$TOKEN/sendMessage"
+GOODMSSGE = "Backup creation was successful"          #Good news
+BADMSSGE = "Houston, we have a problem. Check logs"   #Bad news
 #
+function alert {
+  echo "  _______________________________
+  Alerts are generated"
+if [ "$statsave" = "gg" ]
+  then
+#    curl -s -X POST $URL -d chat_id=$IDCHAT -d text="$GOODMSSGE"
+    curl -s -X POST $URL -d chat_id=$IDPM -d text="$GOODMSSGE"
+    echo "END
+    _______________________________"
+  else
+    curl -s -X POST $URL -d chat_id=$IDPM -d text="$BADMSSGE"
+#    curl -s -X POST $URL -d chat_id=$IDCHAT -d text="$BADMSSGE"
+    echo "END
+    _______________________________"
+fi
+}
