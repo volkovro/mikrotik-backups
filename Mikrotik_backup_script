@@ -97,7 +97,7 @@ startsaver >> $DIR$DATE.log               #Start save backup's
 # If an error occurred while creating or copying, including when
 # utilities were working, the archive will be marked as broken,
 # and you will see an error in the log
-statsave=$(cat $DIR$DATE.log | grep "ERROR \| failed \| denied" && echo ERROR || echo success )
+statsave=$(cat $DIR$DATE.log | grep "ERROR \| failed \| denied \| error \| Permission" && echo ERROR || echo success )
 #
 function archandel {
 echo "
@@ -137,28 +137,29 @@ archandel >> $DIR$DATE.log    #Archiving of collected backup's started
 # It is convenient and quite simple. You can learn about how to find
 # out the chat ID and bot token from the many tutorials on the network,
 # I will not describe it.                           Attention!
-# If this messenger is blocked in your country, you will have to use VPN
-#Variables for alerts
-TOKEN =                       #Bot token
-IDPM =                        #ID chat where only you and the bot
-#IDCHAT =                     #If you have a group chat - its ID
-URL = "https://api.telegram.org/bot$TOKEN/sendMessage"
-GOODMSSGE = "Backup creation was successful"          #Good news
-BADMSSGE = "Houston, we have a problem. Check logs"   #Bad news
+# If this messenger is blocked in your country, you will have to use VPN or PROXY
 #
+#Variables for alerts
+TOKEN=
+IDCHAT=
+URL="https://api.telegram.org/bot$TOKEN/sendMessage"
+#PROXYSOCKS=
+#TGMESS="curl --silent --show-error --fail -k -G -o /dev/null -x socks5://${PROXYSOCKS} ${URL} -d chat_id=${IDCHAT} "
+TGMESS="curl --silent --show-error --fail -k -G -o /dev/null $URL -d chat_id=$IDCHAT "
+#Function alerts
 function alert {
   echo "  _______________________________
   Alerts are generated"
-if [ "$statsave" = "gg" ]
+if [ "$statsave" = "$gg" ]
   then
-#    curl -s -X POST $URL -d chat_id=$IDCHAT -d text="$GOODMSSGE"
-    curl -s -X POST $URL -d chat_id=$IDPM -d text="$GOODMSSGE"
+    $TGMESS --data-urlencode "text=Creation of backups $DATE was successful"
     echo "END
-    _______________________________"
+  _______________________________"
   else
-    curl -s -X POST $URL -d chat_id=$IDPM -d text="$BADMSSGE"
-#    curl -s -X POST $URL -d chat_id=$IDCHAT -d text="$BADMSSGE"
+    $TGMESS --data-urlencode "text=An error occurred while creating backups, check the $DATE log"
     echo "END
-    _______________________________"
+  _______________________________"
 fi
 }
+#
+alert >> $DIR$DATE.log
