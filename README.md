@@ -26,7 +26,7 @@
 
 1. Check that you have all the necessary installed
 
-`   $   sudo apt-get install openssh-server openssh-client scp sshpass curl zip`
+`   $   sudo apt-get install openssh-server openssh-client scp sshpass curl zip python3`
 
 2. Open "Mikrotik_backuper.sh"
 3. Find the lines "`DIR=`","`LGIN=`","`PRT=`"
@@ -105,3 +105,13 @@
 >The log and archive with backups will be stored in the folder you specified.  
 >
 >Please note that you should not use this script at the border of the day, as the names use the date (and yes, check it on your device before using the script)
+
+---
+#### P.S.:
+>
+> When I wrote this script, I assumed that you had previously connected via ss () to your devices, but if you hadn’t done this before, connect to it before adding a new device to the script.
+>
+> This is necessary in order to answer yes to the following question:
+>
+> `RSA key fingerprint is SHA256:Oa00aaaaAA0Aa00AAaa0a/AaaaAAaaaAA0AAAaa0aaa.
+Are you sure you want to continue connecting (yes/no)?`
