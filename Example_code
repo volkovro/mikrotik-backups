@@ -1,0 +1,179 @@
+#!/bin/bash
+#
+#
+# Please note that for the correct operation you
+# will need the utilities found here.
+#
+#
+# Static Variables
+DIR=/home/user/backup/                # Directory for backups
+#                                     # Do not use system directories, create a new!
+#
+PRT=22                      # Port, but if you have different ports for each device: 
+#                           #                                       - adjust Supplementer.py
+#
+#
+DATE=$(echo `date +%Y.%m.%d`)         # Date
+exec 2>> $DIR$DATE".log"              # Need for log (errors redirection)
+#
+#
+# Individual variables
+IP=192.168.1.1                        # Mikrotik IP
+LGIN=admin                            # Mikrotik login (user)
+PASS=example password                 # Password (SSH)
+NAME=TestRouter                       # Name router
+#status=$(ping -c 1 $IP &> /dev/null && echo success || echo fail) # Verification. I do not recommend
+status=$(netcat -w3 -z $IP $PRT && echo success || echo fail)      # ICMP, but you can comment on
+#                                                                  # the unnecessary, use #
+#
+#NEWVARIABLE
+#
+#
+# Other Variables
+SHELF=13                     # Shelf life, needed to remove old backups (in days)
+gg=success                   # Variable to check (netcat or ICMP check)
+#
+#
+#
+# Echo is necessary for visualizing and recording errors.
+# If verification passes, a backup will be created on the router,
+# then saved locally,
+# after which the backup will be deleted from the router.
+# If not, an error will be displayed, excluding utility errors.
+#
+function router0 {
+echo "
+  Start $IP ($NAME)...
+  "
+if [ $status = $gg ]
+then
+  echo "_______________________________
+  Status $IP - OK, create backup:"
+  sshpass -p $PASS ssh -T -p $PRT $LGIN@$IP << EOF
+export file=$IP$NAME
+system backup save name=$IP$NAME
+quit
+EOF
+echo "
+  Lockal save backup's...
+  "
+sshpass -p $PASS scp -P $PRT $LGIN@$IP":/$IP$NAME.rsc" $DIR
+sshpass -p $PASS scp -P $PRT $LGIN@$IP":/$IP$NAME.backup" $DIR
+echo "
+  Cleaning router directory...
+  "
+sshpass -p $PASS ssh -T -p $PRT $LGIN@$IP << EOF
+file remove "$IP$NAME.rsc"
+file remove "$IP$NAME.backup"
+quit
+EOF
+echo "
+$IP END
+  _______________________________
+"
+else
+  echo "  ...............................
+  ERROR $IP,
+  backup can't create and save.
+  Check the specified port and ip
+  ...............................
+  _______________________________
+  "
+fi
+}
+#
+#
+#NEWFUNK
+#
+#
+function startsaver{
+  router0
+# NEWNAME
+}
+#
+#
+#
+startsaver >> $DIR$DATE.log               # Start save backup's
+#
+#
+#
+# Logging, archiving and version control
+#
+# If an error occurred while creating or copying, including when
+# utilities were working, the archive will be marked as broken,
+# and you will see an error in the log
+statsave=$(cat $DIR$DATE.log | grep "ERROR \| failed \| denied \| error \| Permission" && echo ERROR || echo success )
+#
+function archandel {
+echo "
+
+  _______________________________
+  Archiving of collected backup's started:"
+if [ "$statsave" = "$gg" ]
+  then
+    zip -9 -j $DIR$DATE.zip $DIR*.backup $DIR*rsc
+    rm $DIR*.backup $DIR*.rsc
+    echo "
+    search and delete old versions"
+    find "$DIR"2* -mtime +$SHELF -delete
+    echo "
+  Archiving done
+  _______________________________"
+  else
+    echo "  ...............................
+                ERROR
+    not all backups are received
+        сheck the correctness
+         of the entered data
+          and read the log!
+  ..............................."
+    zip -9 -j $DIR$DATE"_brocken".zip $DIR*.backup $DIR*rsc
+    rm $DIR*.backup $DIR*.rsc
+    echo "  _______________________________"
+fi
+}
+#
+archandel >> $DIR$DATE.log    # Archiving of collected backup's started
+                              # Search and delete old versions opt.
+#
+#
+#
+# I suggest using the Telegram bot for alerts.
+# It is convenient and quite simple. You can learn about how to find
+# out the chat ID and bot token from the many tutorials on the network,
+# I will not describe it.
+# Attention!
+# If this messenger is blocked in your country, you will have to use VPN or PROXY.
+#
+#
+# Variables for alerts
+TOKEN="000000000:AAAaAAaAAAA-0aa0-AaaAaAAAaaaaaaA0aa"
+IDCHAT="-0000000000000"                 # ID dialogue (only bot and you) will be unsigned('-')
+URL="https://api.telegram.org/bot$TOKEN/sendMessage"
+#
+#
+# If you want to use proxies, just use these variables instead of the ones presented below: 
+#PROXYSOCKS=                    #example: PROXYSOCKS="192.168.1.2:1080"
+#TGMESS="curl --silent --show-error --fail -k -G -o /dev/null -x socks5://${PROXYSOCKS} ${URL} -d chat_id=${IDCHAT} "
+# If the proxy type in the variable above is not suitable for you needs,
+# refer to the documentation utility 'curl' and correct the variable above.
+#
+#
+TGMESS="curl --silent --show-error --fail -k -G -o /dev/null $URL -d chat_id=$IDCHAT "
+# Function alerts
+function alert {
+  echo "  _______________________________
+  Alerts are generated"
+if [ "$statsave" = "$gg" ]
+  then
+    $TGMESS --data-urlencode "text=Creation of backups $DATE was successful"
+    echo "END
+  _______________________________"
+  else
+    $TGMESS --data-urlencode "text=An error occurred while creating backups, check the $DATE log"
+    echo "END
+  _______________________________"
+fi
+}
+#
+alert >> $DIR$DATE.log
