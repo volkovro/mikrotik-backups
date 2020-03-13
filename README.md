@@ -109,9 +109,12 @@
 ---
 #### P.S.:
 >
-> When I wrote this script, I assumed that you had previously connected via ss () to your devices, but if you hadn’t done this before, connect to it before adding a new device to the script.
+> When I wrote this script, I assumed that you had previously connected via ssh to your devices, but if you hadn’t done this before, connect to it before adding a new device to the script.
 >
 > This is necessary in order to answer yes to the following question:
 >
 > `RSA key fingerprint is SHA256:Oa00aaaaAA0Aa00AAaa0a/AaaaAAaaaAA0AAAaa0aaa.
 Are you sure you want to continue connecting (yes/no)?`
+
+***
+##### ***LICENSE MIT 2020 ©***
