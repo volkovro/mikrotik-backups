@@ -1,4 +1,4 @@
-# Mikrotik backups script
+# Mikrotik backup script
 ### For computers running GNU/Linux
 ### This project is intended for centralized backups of devices running router_os (Mikrotik routers)
 
