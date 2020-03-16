@@ -18,10 +18,10 @@ exec 2>> $DIR$DATE".log"              # Need for log (errors redirection)
 #
 #
 # Individual variables
-IP=192.168.1.1                        # Mikrotik IP
-LGIN=admin                            # Mikrotik login (user)
-PASS=example password                 # Password (SSH)
-NAME=TestRouter                       # Name router
+IP='192.168.1.1'                        # Mikrotik IP
+LGIN='admin'                            # Mikrotik login (user)
+PASS='example password'                 # Password (SSH)
+NAME='TestRouter'                       # Name router
 #status=$(ping -c 1 $IP &> /dev/null && echo success || echo fail) # Verification. I do not recommend
 status=$(netcat -w3 -z $IP $PRT && echo success || echo fail)      # ICMP, but you can comment on
 #                                                                  # the unnecessary, use #
