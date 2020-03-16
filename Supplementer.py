@@ -23,22 +23,25 @@ tamplate_name = '  router' + a + '\n' + '# NEWNAME'
 tamplate_variable = (
                             'IP' +
                             a +
-                            '=' +
-                            ipset
+                            "='" +
+                            ipset +
+                            "'"
                     ) + \
                     '\r' + \
                     (
                             'PASS' +
                             a +
-                            '=' +
-                            ippasswd
+                            "='" +
+                            ippasswd +
+                            "'"
                     ) + \
                     '\r' + \
                     (
                             'NAME' +
                             a +
-                            '=' +
-                            ipname
+                            "='" +
+                            ipname +
+                            "'"
                     ) + \
                     '\r' + \
                     (
