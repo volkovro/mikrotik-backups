@@ -3,7 +3,7 @@
 ### This project is intended for centralized management backups of devices running router_os (Mikrotik routers and other)
 
 
-***This is my first project, do not judge strictly***
+***This is my first project, do not judge strictly :) ***
 
 ***
 ***
