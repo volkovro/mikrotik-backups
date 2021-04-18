@@ -117,4 +117,4 @@
 Are you sure you want to continue connecting (yes/no)?`
 
 ***
-##### ***LICENSE MIT 2020 ©***
+##### ***LICENSE MIT ©***
